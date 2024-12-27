@@ -1,4 +1,4 @@
-# Use GPU for Docker runtime
+# Use GPU for k8s runtime
 
 ### Resource
 * Ubuntu v24.04
