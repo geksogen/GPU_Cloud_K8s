@@ -1,10 +1,16 @@
 # Use GPU for k8s runtime
 
 ### Resource
-* Ubuntu 24.04.1 с установленной CUDA 12.6
-* CUDA 12.9
-* CudNN 9.5
-* HDD 300Gb
+* Ubuntu 24.04.1 с среда контейнеров Docker/NGC
+* NGC Cli
+* Docker 27.3.1
+* nvidia-container-toolkit
+* cuda-toolkit 12.6
+* anaconda 24.9.2 - python 3.9
+* pytorch 2.5.1 - python 3.11
+* tensorflow-gpu 2.4.1
+* open-driver 560
+* HDD 240Gb
 * RTX2080TI 11GB 
 
 ### Install Requirements
