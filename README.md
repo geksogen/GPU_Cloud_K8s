@@ -1,7 +1,7 @@
 # Use GPU for k8s runtime
 
 ### Resource
-* Ubuntu v24.04
+* Ubuntu 24.04.1 с установленной CUDA 12.6
 * CUDA 12.9
 * CudNN 9.5
 * HDD 300Gb
