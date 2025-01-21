@@ -24,5 +24,10 @@ docker-compose --version
 ```
 
 ```Bash
-git clone 
+git clone https://github.com/geksogen/GPU_Cloud_K8s.git
+cd GPU_Cloud_K8s
+docker-compose up -d
+docker exec -it ollama sh
+ollama pull owl/t-lite
+# <IP:8080> Final service
 ```
