@@ -28,6 +28,6 @@ git clone https://github.com/geksogen/GPU_Cloud_K8s.git
 cd Llama_webUI_chat
 docker-compose up -d
 docker exec -it ollama sh
-ollama pull owl/t-lite # download model to host
+ollama pull owl/t-lite # download model to host (owl/t-lite:instruct)
 # <IP:8080> Final service
 ```
