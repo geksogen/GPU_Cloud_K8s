@@ -15,7 +15,8 @@
 * RTX2080TI 11GB 
 
 ```Bash
-git clone 
+git clone https://github.com/geksogen/GPU_Cloud_K8s.git
+sh GPU_Cloud_K8s/RAG_Flow/configure_VM.sh
 ```
 
 ```Bash

@@ -25,9 +25,11 @@ docker-compose --version
 
 ```Bash
 git clone https://github.com/geksogen/GPU_Cloud_K8s.git
-cd Llama_webUI_chat
+cd GPU_Cloud_K8s/Llama_webUI_chat/
+sh configure_VM
 docker-compose up -d
 docker exec -it ollama sh
 ollama pull owl/t-lite # download model to host (owl/t-lite:instruct)
+ollama run owl/t-lite
 # <IP:8080> Final service
 ```
