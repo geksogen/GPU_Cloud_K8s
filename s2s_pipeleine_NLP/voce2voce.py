@@ -2,13 +2,41 @@ import pyaudio
 import json
 import os
 from vosk import Model, KaldiRecognizer
-
 from ollama import Client
+from speechkit import Session, SpeechSynthesis
 
 client = Client(
   host='http://81.94.156.203:11434/',
   headers={'x-some-header': 'some-value'}
 )
+
+oauth_token = "y0_AgAAAAB6bN0mAATuwQAAAAEbnkPjAACg8TcmqidA7aRLT-uIt5s4VYaKJg"
+catalog_id = "b1gho3om0lee0vkneq4e"
+
+session = Session.from_yandex_passport_oauth_token(oauth_token, catalog_id)
+synthesizeAudio = SpeechSynthesis(session)
+
+def pyaudio_play_audio_function(audio_data, num_channels=1,
+                                sample_rate=16000, chunk_size=4000) -> None:
+    p = pyaudio.PyAudio()
+    stream = p.open(
+        format=pyaudio.paInt16,
+        channels=num_channels,
+        rate=sample_rate,
+        output=True,
+        frames_per_buffer=chunk_size
+    )
+
+    try:
+        for i in range(0, len(audio_data), chunk_size):
+            stream.write(audio_data[i:i + chunk_size])
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+sample_rate = 16000 # частота дискретизации должна
+                    # совпадать при синтезе и воспроизведении
 
 # Параметры записи
 FORMAT = pyaudio.paInt16
@@ -36,7 +64,7 @@ else:
     # Загружаем модель
     model = Model(model_path)
 
-    # Создаем распознаватель
+    # Создаем распознаватель :)
     recognizer = KaldiRecognizer(model, RATE)
 
     # URL для запроса к Ollama
@@ -66,14 +94,17 @@ else:
                             'content': text.lower()
                         }]
                     )
-                    #if response.status_code == 200:
-                        #response_data = response.json()
+
                     print(response['message']['content'] + '\n')
-                    print("Следующий вопрос :)")
-                    #else:
-                    #    print("Ошибка при запросе к Ollama:", response.status_code, response.text)
-                #else:
-                #    print("Вы нечего не сказали")
+                    # Синтез речи
+                    audio_data = synthesizeAudio.synthesize_stream(
+                    text=response['message']['content'], # Ответ от LLM
+                    voice='ermil', format='lpcm', sampleRateHertz=sample_rate
+                    )
+                    # Воспроизводим синтезированный файл
+                    pyaudio_play_audio_function(audio_data, sample_rate=sample_rate)
+                    print("Следующий вопрос :)" + '\n')
+
 
     except KeyboardInterrupt:
         print("Потоковая запись остановлена.")
