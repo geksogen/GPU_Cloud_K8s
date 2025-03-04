@@ -2,38 +2,48 @@ import pyaudio
 import json
 import os
 from vosk import Model, KaldiRecognizer
+import torch
+import numpy as np
+import time
 from ollama import Client
-from speechkit import Session, SpeechSynthesis
 
 client = Client(
   host='http://81.94.156.147:11434/',
   headers={'x-some-header': 'some-value'}
 )
 
-oauth_token = "y0_AgAAAAB6bN0mAATuwQAAAAEbnkPjAACg8TcmqidA7aRLT-uIt5s4VYaKJg"
-catalog_id = "b1gho3om0lee0vkneq4e"
+device = torch.device('cpu')
+torch.set_num_threads(4)
+local_file = 'tts_model/v4_ru.ptt'
 
-session = Session.from_yandex_passport_oauth_token(oauth_token, catalog_id)
-synthesizeAudio = SpeechSynthesis(session)
+model_tts = torch.package.PackageImporter(local_file).load_pickle("tts_models", "model")
+model_tts.to(device)
 
-def pyaudio_play_audio_function(audio_data, num_channels=1,
-                                sample_rate=48000, chunk_size=4000) -> None:
+sample_rate = 48000
+speaker='aidar' # 'aidar', 'baya', 'kseniya', 'xenia', 'random'
+
+
+def play_tensor(tensor, sample_rate):
+    # Преобразуем тензор в numpy массив
+    audio_data = tensor.numpy()
+
+    # Создаем объект PyAudio
     p = pyaudio.PyAudio()
-    stream = p.open(
-        format=pyaudio.paInt16,
-        channels=num_channels,
-        rate=sample_rate,
-        output=True,
-        frames_per_buffer=chunk_size
-    )
 
-    try:
-        for i in range(0, len(audio_data), chunk_size):
-            stream.write(audio_data[i:i + chunk_size])
-    finally:
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
+    # Открываем поток для воспроизведения
+    stream = p.open(format=pyaudio.paFloat32,
+                    channels=1,
+                    rate=sample_rate,
+                    output=True)
+
+    # Воспроизводим аудио
+    stream.write(audio_data.astype(np.float32).tobytes())
+
+    # Закрываем поток и освобождаем ресурсы
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
 
 sample_rate = 48000 # частота дискретизации должна
                     # совпадать при синтезе и воспроизведении
@@ -83,7 +93,7 @@ else:
                 if "стоп" in text.lower():
                     print("Программа остановлена")
                     break
-
+                # Проверка на наличие вопроса
                 if len(text) > 0:
                     # Отправка запроса к Ollama
                     print("Обработка LLM")
@@ -94,17 +104,21 @@ else:
                             'content': text.lower()
                         }]
                     )
-
+                    print("Ответ от LLM" + '\n')
                     print(response['message']['content'] + '\n')
                     # Синтез речи
-                    audio_data = synthesizeAudio.synthesize_stream(
-                    text=response['message']['content'], # Ответ от LLM
-                    voice='ermil', format='lpcm', sampleRateHertz=sample_rate
-                    ) # alena, filipp, ermil, jane, omazh
+                    print("Синтез речи" + '\n')
+                    start_time = time.time()
+                    audio_data = model_tts.apply_tts(response['message']['content'],
+                             speaker=speaker,
+                             sample_rate=sample_rate)
                     # Воспроизводим синтезированный файл
-                    pyaudio_play_audio_function(audio_data, sample_rate=sample_rate)
+                    print("Воспроизведение ответа" + '\n')
+                    play_tensor(audio_data, sample_rate)
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    print(f"Result Time: {elapsed_time} секунд" + '\n')
                     print("Следующий вопрос :)" + '\n')
-
 
     except KeyboardInterrupt:
         print("Потоковая запись остановлена.")
